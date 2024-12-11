@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Probar API Rest</title>
+  <style>
+    article {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    img {
+      height: auto;
+      width: 320px;
+      max-width: 100%;
+    }
+  </style>
+  <script type="module">
+    const main = document.querySelector('main');
+
+    // Mostrar un mensaje de carga
+    main.innerHTML = '<p>Cargando películas...</p>';
+
+    fetch('http://localhost:1234/movies')
+      .then(res => {
+        if (!res.ok) throw new Error('Error al cargar las películas');
+        return res.json();
+      })
+      .then(movies => {
+        if (movies.length === 0) {
+          main.innerHTML = '<p>No hay películas disponibles.</p>';
+          return;
+        }
+
+        const html = movies.map(movie => {
+          return `
+            <article data-id="${movie.id}">
+              <h2>${movie.title}</h2>
+              <img src="${movie.poster}" alt="${movie.title}">
+              <p>Año: ${movie.year}</p>
+              <button aria-label="Eliminar ${movie.title}">Eliminar</button>
+            </article>
+          `;
+        }).join('');
+
+        main.innerHTML = html;
+      })
+      .catch(error => {
+        main.innerHTML = `<p>Error: ${error.message}</p>`;
+      });
+
+    document.addEventListener('click', e => {
+      if (e.target.matches('button')) {
+        const article = e.target.closest('article');
+        const id = article.dataset.id;
+
+        if (confirm('¿Estás seguro de que deseas eliminar esta película?')) {
+          fetch(`http://localhost:1234/movies/${id}`, { method: 'DELETE' })
+            .then(res => {
+              if (res.ok) {
+                article.remove();
+                alert('Película eliminada exitosamente');
+              } else {
+                alert('No se pudo eliminar la película');
+              }
+            })
+            .catch(error => {
+              alert(`Error: ${error.message}`);
+            });
+        }
+      }
+    });
+  </script>
+</head>
+<body>
+  <main></main>
+</body>
+</html>
